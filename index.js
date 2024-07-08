@@ -126,15 +126,15 @@ tourSchema.plugin(AutoIncrement, { inc_field: 'tourId' }); // Add auto-increment
 
 const Tour = mongoose.model('Tour', tourSchema);
 
-app.post('/api/saveTour', upload.any('images', 10), async (req, res) => {
+app.post('/api/saveTour', upload.any('images', 20), async (req, res) => {
     try {
         const { title, description, price, language, city, category, date, timeSlot, meetingPoint, teamMembers } = req.body;
-        const images = req.files.map((file) => file.location);
 
-        // Log the received body to check its structure
-        console.log('Received body:', req.body);
+        // Separate images into swiper images and team member photos
+        const swiperImages = req.files.filter(file => file.fieldname === 'swiperImages').map(file => file.location);
+        const teamMemberPhotos = req.files.filter(file => file.fieldname.startsWith('teamMemberPhoto')).map(file => file.location);
 
-        // Ensure teamMembers is an array
+        // Parse teamMembers if it is a JSON string
         let parsedTeamMembers = [];
         try {
             parsedTeamMembers = JSON.parse(teamMembers);
@@ -143,17 +143,13 @@ app.post('/api/saveTour', upload.any('images', 10), async (req, res) => {
             return res.status(400).json({ error: 'Invalid teamMembers format' });
         }
 
-
-        // Construct team members properly
+        // Construct team members properly and assign photos
         const formattedTeamMembers = parsedTeamMembers.map((member, index) => ({
             name: member.name,
             description: member.description,
-            photo: member.photo || null,
+            photo: teamMemberPhotos[index] || null,
             isLeader: member.isLeader === 'true',
         }));
-
-        // Log the parsed and formatted team members to check their structure
-        console.log('Formatted team members:', formattedTeamMembers);
 
         const tour = new Tour({
             title,
@@ -165,7 +161,7 @@ app.post('/api/saveTour', upload.any('images', 10), async (req, res) => {
             date,
             timeSlot,
             meetingPoint,
-            images,
+            images: swiperImages,
             teamMembers: formattedTeamMembers,
         });
 
@@ -210,14 +206,17 @@ app.get('/api/getTourDetails/:tourId', async (req, res) => {
     }
 });
 
-app.post('/api/updateTour/:tourId', upload.any('images', 10), async (req, res) => {
+app.post('/api/updateTour/:tourId', upload.any('images', 20), async (req, res) => {
     const { tourId } = req.params;
 
     try {
         const { title, description, price, language, city, category, date, timeSlot, meetingPoint, teamMembers } = req.body;
-        const images = req.files.map((file) => file.location);
 
-        // Ensure teamMembers is an array
+        // Separate images into swiper images and team member photos
+        const swiperImages = req.files.filter(file => file.fieldname === 'swiperImages').map(file => file.location);
+        const teamMemberPhotos = req.files.filter(file => file.fieldname.startsWith('teamMemberPhoto')).map(file => file.location);
+
+        // Parse teamMembers if it is a JSON string
         let parsedTeamMembers = [];
         try {
             parsedTeamMembers = JSON.parse(teamMembers);
@@ -226,11 +225,11 @@ app.post('/api/updateTour/:tourId', upload.any('images', 10), async (req, res) =
             return res.status(400).json({ error: 'Invalid teamMembers format' });
         }
 
-        // Construct team members properly
+        // Construct team members properly and assign photos
         const formattedTeamMembers = parsedTeamMembers.map((member, index) => ({
             name: member.name,
             description: member.description,
-            photo: member.photo || null,
+            photo: teamMemberPhotos[index] || null,
             isLeader: member.isLeader === 'true',
         }));
 
@@ -247,7 +246,7 @@ app.post('/api/updateTour/:tourId', upload.any('images', 10), async (req, res) =
                 date,
                 timeSlot,
                 meetingPoint,
-                images,
+                images: swiperImages,
                 teamMembers: formattedTeamMembers,
             },
             { new: true } // Return the updated document
@@ -263,7 +262,6 @@ app.post('/api/updateTour/:tourId', upload.any('images', 10), async (req, res) =
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 
 
 app.listen(port, () => {
