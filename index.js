@@ -8,10 +8,10 @@ const jwt = require('jsonwebtoken');
 const AWS = require('aws-sdk');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
-const AutoIncrement = require('mongoose-sequence')(mongoose); // Import mongoose-sequence
+const AutoIncrement = require('mongoose-sequence')(mongoose); 
 
 const app = express();
-const port = process.env.PORT || 3000; // Set a default port if not provided
+const port = process.env.PORT || 3000; 
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -122,7 +122,7 @@ const tourSchema = new mongoose.Schema({
     ],
 });
 
-tourSchema.plugin(AutoIncrement, { inc_field: 'tourId' }); // Add auto-incrementing ID field
+tourSchema.plugin(AutoIncrement, { inc_field: 'tourId' }); 
 
 const Tour = mongoose.model('Tour', tourSchema);
 
@@ -143,7 +143,7 @@ app.post('/api/saveTour', upload.any('images', 20), async (req, res) => {
             return res.status(400).json({ error: 'Invalid teamMembers format' });
         }
 
-        // Construct team members properly and assign photos
+      
         const formattedTeamMembers = parsedTeamMembers.map((member, index) => ({
             name: member.name,
             description: member.description,
@@ -233,7 +233,7 @@ app.post('/api/updateTour/:tourId', upload.any('images', 20), async (req, res) =
             isLeader: member.isLeader === 'true',
         }));
 
-        // Update the tour based on tourId
+      
         const updatedTour = await Tour.findOneAndUpdate(
             { tourId: parseInt(tourId, 10) },
             {
@@ -249,7 +249,8 @@ app.post('/api/updateTour/:tourId', upload.any('images', 20), async (req, res) =
                 images: swiperImages,
                 teamMembers: formattedTeamMembers,
             },
-            { new: true } // Return the updated document
+            { new: true } 
+            
         );
 
         if (!updatedTour) {
